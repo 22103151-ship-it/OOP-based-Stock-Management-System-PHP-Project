@@ -217,6 +217,9 @@ class SSLCommerzService
         $data = json_decode($raw, true);
 
         if (!is_array($data)) {
+            // Log the raw response for debugging
+            error_log("SSLCommerz Response (not JSON): " . substr($raw, 0, 500));
+            
             // Try URL-encoded fallback
             $parsed = [];
             parse_str($raw, $parsed);
@@ -229,7 +232,12 @@ class SSLCommerzService
                 return ['ok' => true, 'gateway_url' => $m[1], 'data' => ['GatewayPageURL' => $m[1]]];
             }
 
-            return ['ok' => false, 'error' => 'Invalid response from gateway', 'http' => $http];
+            return [
+                'ok' => false, 
+                'error' => 'Invalid response from gateway (HTTP ' . $http . '). Check test-sslcommerz.php for details.',
+                'http' => $http,
+                'raw_response' => substr($raw, 0, 200),  // Include first 200 chars for debugging
+            ];
         }
 
         if (!empty($data['GatewayPageURL'])) {

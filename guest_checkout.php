@@ -104,7 +104,11 @@ if (!empty($init['ok']) && !empty($init['gateway_url'])) {
         'redirect_url' => $init['gateway_url'],
     ]);
 } else {
-    echo json_encode(['success' => false, 'message' => $init['error'] ?? 'Payment gateway error']);
+    $errorMsg = $init['error'] ?? 'Payment gateway error';
+    if (isset($init['raw_response'])) {
+        $errorMsg .= ' [Response: ' . htmlspecialchars(substr($init['raw_response'], 0, 100)) . '...]';
+    }
+    echo json_encode(['success' => false, 'message' => $errorMsg]);
 }
 } catch (\Exception $e) {
     http_response_code(400);
