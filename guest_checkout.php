@@ -3,11 +3,9 @@ session_start();
 header('Content-Type: application/json');
 
 use App\Services\GuestOrderService;
-use App\Services\SSLCommerzService;
 
 try {
     include 'config.php';
-    require_once 'includes/sslcommerz_config.php';
 
     $input     = json_decode(file_get_contents('php://input'), true) ?? [];
     $sessionId = $input['session_id'] ?? ($_SESSION['guest_session_id'] ?? '');
@@ -57,65 +55,22 @@ try {
 
     $service->attachTranId($orderId, $tranId);
 
-    // ---- Initiate SSLCommerz payment ----
-    $ssl = new SSLCommerzService(
-        $SSLCOMMERZ_STORE_ID, 
-        $SSLCOMMERZ_STORE_PASS, 
-        (bool)$SSLCOMMERZ_SANDBOX, 
-        (bool)($SSLCOMMERZ_DEMO_MODE ?? false),
-        $SSLCOMMERZ_CALLBACK_URL ?? ''  // Use configured callback URL if set
-    );
-
-    // Get correct base URL with path (e.g., http://localhost/stock)
-    $https    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $script   = $_SERVER['SCRIPT_NAME'] ?? '';
-    $basePath = (strpos($script, '/stock/') !== false) ? '/stock' : rtrim(dirname($script), '/\\');
-    $base     = $https . '://' . $host . $basePath;
-
-    $payload = [
-        'store_id'        => $SSLCOMMERZ_STORE_ID,
-        'store_passwd'    => $SSLCOMMERZ_STORE_PASS,
-        'total_amount'    => $totalAmount,
-        'currency'        => 'BDT',
-        'tran_id'         => $tranId,
-        'success_url'     => $base . '/guest_payment_success.php',
-        'fail_url'        => $base . '/guest_payment_fail.php',
-        'cancel_url'      => $base . '/guest_payment_cancel.php',
-        'shipping_method' => 'NO',
-        'product_name'    => 'Bulk Order - ' . $result['total_stocks'] . ' items',
-        'product_category'  => 'General',
-        'product_profile'   => 'general',
-        'cus_name'        => $guestName,
-        'cus_email'       => $guestPhone . '@guest.local',
-        'cus_add1'        => 'Dhaka',
-        'cus_city'        => 'Dhaka',
-        'cus_postcode'    => '1200',
-        'cus_country'     => 'Bangladesh',
-        'cus_phone'       => $guestPhone,
-        'value_a'         => (string)$orderId,
-        'value_b'         => (string)$guestId,
-        'value_c'         => 'guest',
-        'multi_card_name' => 'bkash',
-    ];
-
-    $init = $ssl->initPayment($payload);
-
-if (!empty($init['ok']) && !empty($init['gateway_url'])) {
+    // ---- Return order details for demo page redirect ----
     unset($_SESSION['guest_cart']);
+    unset($_SESSION['guest_verified']);
+    unset($_SESSION['guest_id']);
+    unset($_SESSION['guest_name']);
+    unset($_SESSION['guest_phone']);
+    
     echo json_encode([
         'success'      => true,
         'message'      => 'Order created successfully',
         'order_id'     => $orderId,
-        'redirect_url' => $init['gateway_url'],
+        'total'        => $totalAmount,
+        'guest_id'     => $guestId,
+        'total_stocks' => $result['total_stocks'],
+        'session_id'   => $sessionId
     ]);
-} else {
-    $errorMsg = $init['error'] ?? 'Payment gateway error';
-    if (isset($init['raw_response'])) {
-        $errorMsg .= ' [Response: ' . htmlspecialchars(substr($init['raw_response'], 0, 100)) . '...]';
-    }
-    echo json_encode(['success' => false, 'message' => $errorMsg]);
-}
 } catch (\Exception $e) {
     http_response_code(400);
     echo json_encode([

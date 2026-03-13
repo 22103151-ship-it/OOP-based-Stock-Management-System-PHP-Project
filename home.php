@@ -1513,7 +1513,18 @@ $has_notifications = array_sum($admin_dots) > 0 || array_sum($staff_dots) > 0 ||
                         signal: AbortSignal.timeout(30000)
                     });
 
-                    const checkoutData = await checkoutRes.json();
+                    // Get raw response text first for debugging
+                    const responseText = await checkoutRes.text();
+                    console.log('guest_checkout.php raw response:', responseText);
+                    
+                    let checkoutData;
+                    try {
+                        checkoutData = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error('Failed to parse JSON:', parseError);
+                        console.error('Response was:', responseText.substring(0, 500));
+                        throw new Error('Invalid JSON from server: ' + responseText.substring(0, 100));
+                    }
                     
                     if (!checkoutData.success) {
                         throw new Error(checkoutData.message || 'Checkout failed');
