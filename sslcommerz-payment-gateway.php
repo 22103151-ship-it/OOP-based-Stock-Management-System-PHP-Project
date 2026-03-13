@@ -81,8 +81,21 @@ try {
         $base_url
     );
 
+    // Log the request for debugging
+    error_log("=== SSL Commerz Payment Request ===");
+    error_log("Store ID: " . $SSLCOMMERZ_STORE_ID);
+    error_log("Callback URL: " . $base_url);
+    error_log("Amount: " . $amount);
+    error_log("Transaction ID: " . $tranId);
+    error_log("Payload: " . json_encode($payload));
+
     // Call the gateway
     $result = $ssl->initPayment($payload);
+
+    // Log the response for debugging
+    error_log("=== SSL Commerz Response ===");
+    error_log("OK: " . ($result['ok'] ? 'true' : 'false'));
+    error_log("Response: " . json_encode($result));
 
     if (!empty($result['ok']) && !empty($result['gateway_url'])) {
         // Redirect to gateway
@@ -102,14 +115,28 @@ try {
             </script>
         </body>
         </html>';
+        exit;
     } else {
-        // Return error
+        // Return error with detailed debugging info
         header('HTTP/1.1 400 Bad Request');
+        $errorMessage = $result['error'] ?? 'Payment gateway error';
+        
+        // Add raw response to error if available
+        if (!empty($result['raw_response'])) {
+            $errorMessage .= ' | Raw: ' . $result['raw_response'];
+        }
+        
         echo json_encode([
             'success' => false,
-            'message' => $result['error'] ?? 'Payment gateway error',
-            'details' => $result,
+            'message' => $errorMessage,
+            'details' => [
+                'error' => $result['error'] ?? null,
+                'http_code' => $result['http'] ?? null,
+                'raw_response' => $result['raw_response'] ?? null,
+                'data' => $result['data'] ?? null,
+            ],
         ]);
+        exit;
     }
 
 } catch (Exception $e) {

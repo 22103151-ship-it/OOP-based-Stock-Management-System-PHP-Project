@@ -349,7 +349,7 @@ $page = $_GET['page'] ?? 'home';
                 </div>
                 <?php endif; ?>
 
-                <form method="POST" action="sslcommerz-payment-gateway.php">
+                <form id="paymentForm" method="POST" action="sslcommerz-payment-gateway.php">
                     <div>
                         <label for="customer_name">Customer Name *</label>
                         <input type="text" id="customer_name" name="customer_name" value="<?= $from_guest_checkout ? 'Guest Customer' : 'Test Customer' ?>" <?= $from_guest_checkout ? 'readonly' : '' ?> style="<?= $from_guest_checkout ? 'background: #f5f5f5; cursor: not-allowed;' : '' ?>" required>
@@ -391,10 +391,58 @@ $page = $_GET['page'] ?? 'home';
                     <input type="hidden" name="session_id" value="<?= $session_id ?>">
                     <input type="hidden" name="from_guest_checkout" value="<?= $from_guest_checkout ? '1' : '0' ?>">
 
-                    <button type="submit" style="grid-column: 1 / -1;">
+                    <button id="submitBtn" type="submit" style="grid-column: 1 / -1;">
                         <i class="fas fa-arrow-right"></i> Proceed to Payment
                     </button>
                 </form>
+
+                <script>
+                document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const btn = document.getElementById('submitBtn');
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                    
+                    try {
+                        const formData = new FormData(this);
+                        const response = await fetch('sslcommerz-payment-gateway.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const responseText = await response.text();
+                        console.log('Gateway response:', responseText);
+                        
+                        // Check if it's HTML (successful redirect page)
+                        if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+                            // Success - show the redirect page
+                            document.open();
+                            document.write(responseText);
+                            document.close();
+                        } else {
+                            // Try to parse as JSON (error response)
+                            try {
+                                const data = JSON.parse(responseText);
+                                alert('Payment Error: ' + (data.message || 'Unknown error') + 
+                                    (data.details?.raw_response ? '\n\nRaw: ' + data.details.raw_response : ''));
+                                btn.disabled = false;
+                                btn.innerHTML = originalText;
+                            } catch (e) {
+                                alert('Payment Error: Invalid response from server\n\n' + responseText.substring(0, 200));
+                                btn.disabled = false;
+                                btn.innerHTML = originalText;
+                            }
+                        }
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        console.error('Payment form error:', err);
+                    }
+                });
+                </script>
 
             <?php elseif ($page === 'api-test'): ?>
                 <h2>API Connection Test</h2>
