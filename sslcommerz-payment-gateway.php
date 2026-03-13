@@ -34,33 +34,9 @@ try {
         throw new Exception('Order ID too long (max 20 characters).');
     }
 
-    // If coming from guest checkout, create the order first
-    $guest_id = null;
-    $db_order_id = null;
-    
-    if ($from_guest_checkout == '1' && !empty($session_id)) {
-        $guestService = new GuestOrderService($conn);
-        
-        // Retrieve guest from session (this was stored when they verified with OTP)
-        $guestRow = $guestService->findVerifiedGuestBySession($session_id);
-        
-        if ($guestRow) {
-            $guest_id = $guestRow['id'];
-            
-            // Get cart data from session storage (sent via JavaScript)
-            // For now, we'll retrieve it from the guest's current cart in database
-            // The actual cart was already validated in home.php
-            
-            // Create order in database
-            $cartItems = []; // This would normally come from the guest's cart
-            // Since we're in demo mode, we'll just create a simple order
-            
-            $result = $guestService->checkout($guest_id, $cartItems);
-            if ($result['success']) {
-                $db_order_id = $result['order_id'];
-            }
-        }
-    }
+    // Get order info from guest checkout form
+    $guest_id = $_POST['guest_id'] ?? null;
+    $db_order_id = $_POST['order_id_db'] ?? null;
 
     // Generate transaction ID
     $tranId = 'TXN' . time() . str_pad(random_int(0, 99), 2, '0', STR_PAD_LEFT);

@@ -329,21 +329,22 @@ $page = $_GET['page'] ?? 'home';
                 </div>
 
                 <?php
-                    // Get amount from query parameter if passed from guest checkout
+                    // Get order info from guest checkout
                     $amount_param = isset($_GET['amount']) ? (float)$_GET['amount'] : 0;
-                    $items_param = isset($_GET['items']) ? (int)$_GET['items'] : 0;
+                    $order_id_param = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
+                    $guest_id_param = isset($_GET['guest_id']) ? (int)$_GET['guest_id'] : 0;
                     $session_id = isset($_GET['session_id']) ? htmlspecialchars($_GET['session_id']) : '';
                     
                     // Determine if this is coming from guest checkout
-                    $from_guest_checkout = !empty($session_id);
+                    $from_guest_checkout = !empty($session_id) && $order_id_param > 0;
                 ?>
 
                 <?php if ($from_guest_checkout): ?>
                 <div class="info-box success">
-                    <strong>✅ Guest Cart Loaded!</strong>
+                    <strong>✅ Order Created Successfully!</strong>
                     <div style="margin-top: 10px;">
-                        Items: <strong><?= $items_param ?></strong> | 
-                        Total Amount: <strong>৳<?= number_format($amount_param, 2) ?></strong>
+                        Order ID: <strong>#<?= $order_id_param ?></strong> | 
+                        Amount: <strong>৳<?= number_format($amount_param, 2) ?></strong>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -351,7 +352,7 @@ $page = $_GET['page'] ?? 'home';
                 <form method="POST" action="sslcommerz-payment-gateway.php">
                     <div>
                         <label for="customer_name">Customer Name *</label>
-                        <input type="text" id="customer_name" name="customer_name" value="<?= $from_guest_checkout ? 'Guest Customer' : 'Test Customer' ?>" required>
+                        <input type="text" id="customer_name" name="customer_name" value="<?= $from_guest_checkout ? 'Guest Customer' : 'Test Customer' ?>" <?= $from_guest_checkout ? 'readonly' : '' ?> style="<?= $from_guest_checkout ? 'background: #f5f5f5; cursor: not-allowed;' : '' ?>" required>
                     </div>
 
                     <div>
@@ -366,30 +367,32 @@ $page = $_GET['page'] ?? 'home';
 
                     <div>
                         <label for="product_name">Product Name *</label>
-                        <input type="text" id="product_name" name="product_name" value="<?= $from_guest_checkout ? 'Guest Bulk Order (' . $items_param . ' items)' : 'Test Product' ?>" required>
+                        <input type="text" id="product_name" name="product_name" value="<?= $from_guest_checkout ? 'Guest Bulk Order #' . $order_id_param : 'Test Product' ?>" required>
                     </div>
 
                     <div>
                         <label for="amount">Amount (BDT) *</label>
-                        <input type="number" id="amount" name="amount" value="<?= $amount_param > 0 ? $amount_param : '100' ?>" min="1" step="0.01" required <?= $from_guest_checkout ? 'readonly' : '' ?> style="<?= $from_guest_checkout ? 'background: #f5f5f5; cursor: not-allowed;' : '' ?>">
+                        <input type="number" id="amount" name="amount" value="<?= $amount_param > 0 ? $amount_param : '100' ?>" min="1" step="0.01" required readonly style="background: #f5f5f5; cursor: not-allowed;">
                     </div>
 
                     <div>
                         <label for="order_id">Order ID *</label>
-                        <input type="text" id="order_id" name="order_id" value="<?= $from_guest_checkout ? 'GUEST-' . time() : 'TEST' . time() ?>" required>
+                        <input type="text" id="order_id" name="order_id" value="<?= $from_guest_checkout ? $order_id_param : 'TEST' . time() ?>" required <?= $from_guest_checkout ? 'readonly' : '' ?> style="<?= $from_guest_checkout ? 'background: #f5f5f5; cursor: not-allowed;' : '' ?>">
                     </div>
 
                     <div class="grid-full">
                         <label for="product_description">Product Description</label>
-                        <textarea id="product_description" name="product_description" rows="3"><?= $from_guest_checkout ? 'Guest bulk order - ' . $items_param . ' items' : 'Test transaction for SSL Commerz sandbox' ?></textarea>
+                        <textarea id="product_description" name="product_description" rows="3"><?= $from_guest_checkout ? 'Guest bulk order #' . $order_id_param : 'Test transaction for SSL Commerz sandbox' ?></textarea>
                     </div>
 
-                    <!-- Hidden field to track session -->
+                    <!-- Hidden fields for tracking -->
+                    <input type="hidden" name="order_id_db" value="<?= $order_id_param ?>">
+                    <input type="hidden" name="guest_id" value="<?= $guest_id_param ?>">
                     <input type="hidden" name="session_id" value="<?= $session_id ?>">
                     <input type="hidden" name="from_guest_checkout" value="<?= $from_guest_checkout ? '1' : '0' ?>">
 
                     <button type="submit" style="grid-column: 1 / -1;">
-                        <i class="fas fa-arrow-right"></i> Initiate Payment
+                        <i class="fas fa-arrow-right"></i> Proceed to Payment
                     </button>
                 </form>
 

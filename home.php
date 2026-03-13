@@ -1494,46 +1494,52 @@ $has_notifications = array_sum($admin_dots) > 0 || array_sum($staff_dots) > 0 ||
 
                 const originalText = checkoutBtn.innerHTML;
                 checkoutBtn.disabled = true;
-                checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading Payment Gateway...';
+                checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Order...';
+
+                const items = Object.entries(this.guestCart).map(([id, data]) => ({
+                    product_id: id,
+                    quantity: data.qty
+                }));
 
                 try {
-                    // Prepare cart data
-                    const items = Object.entries(this.guestCart).map(([id, data]) => ({
-                        product_id: id,
-                        quantity: data.qty,
-                        price: data.price
-                    }));
+                    // Step 1: Create order via guest_checkout.php
+                    const checkoutRes = await fetch('guest_checkout.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: this.guestSessionId,
+                            items: items
+                        }),
+                        signal: AbortSignal.timeout(30000)
+                    });
 
-                    // Store cart data in session storage temporarily
-                    sessionStorage.setItem('guestCheckoutCart', JSON.stringify({
-                        session_id: this.guestSessionId,
-                        items: items
-                    }));
-
-                    // Calculate totals
-                    let subtotal = 0;
-                    let totalStocks = 0;
-                    for (const [id, data] of Object.entries(this.guestCart)) {
-                        subtotal += (data.price * data.qty);
-                        totalStocks += data.qty;
+                    const checkoutData = await checkoutRes.json();
+                    
+                    if (!checkoutData.success) {
+                        throw new Error(checkoutData.message || 'Checkout failed');
                     }
-                    const discount = Math.floor(totalStocks / 100) * 1000;
-                    const total = subtotal - discount;
 
-                    // Redirect to SSL Commerz demo page with cart info
+                    // Step 2: Now redirect to SSL Commerz demo with order info
+                    const orderId = checkoutData.order_id;
+                    const totalAmount = checkoutData.total;
+                    const guestId = checkoutData.guest_id;
+
+                    checkoutBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Redirecting to Payment...';
+
                     const params = new URLSearchParams({
-                        amount: total.toFixed(2),
-                        items: items.length,
+                        amount: totalAmount.toFixed(2),
+                        order_id: orderId,
+                        guest_id: guestId,
                         session_id: this.guestSessionId
                     });
 
-                    checkoutBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Redirecting...';
                     window.location.href = 'sslcommerz-demo.php?page=test-payment&' + params.toString();
 
                 } catch (err) {
-                    this.notify('Error preparing payment: ' + (err.message || 'Unknown error'), 'error');
+                    this.notify('Order Error: ' + (err.message || 'Unknown error'), 'error');
                     checkoutBtn.disabled = false;
                     checkoutBtn.innerHTML = originalText;
+                    console.error('Checkout error:', err);
                 }
             }
         }
