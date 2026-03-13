@@ -1494,43 +1494,44 @@ $has_notifications = array_sum($admin_dots) > 0 || array_sum($staff_dots) > 0 ||
 
                 const originalText = checkoutBtn.innerHTML;
                 checkoutBtn.disabled = true;
-                checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Connecting to Payment Gateway...';
-
-                const items = Object.entries(this.guestCart).map(([id, data]) => ({
-                    product_id: id,
-                    quantity: data.qty
-                }));
+                checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading Payment Gateway...';
 
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 60000);
+                    // Prepare cart data
+                    const items = Object.entries(this.guestCart).map(([id, data]) => ({
+                        product_id: id,
+                        quantity: data.qty,
+                        price: data.price
+                    }));
 
-                    const res = await fetch('guest_checkout.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            session_id: this.guestSessionId,
-                            items: items
-                        }),
-                        signal: controller.signal
+                    // Store cart data in session storage temporarily
+                    sessionStorage.setItem('guestCheckoutCart', JSON.stringify({
+                        session_id: this.guestSessionId,
+                        items: items
+                    }));
+
+                    // Calculate totals
+                    let subtotal = 0;
+                    let totalStocks = 0;
+                    for (const [id, data] of Object.entries(this.guestCart)) {
+                        subtotal += (data.price * data.qty);
+                        totalStocks += data.qty;
+                    }
+                    const discount = Math.floor(totalStocks / 100) * 1000;
+                    const total = subtotal - discount;
+
+                    // Redirect to SSL Commerz demo page with cart info
+                    const params = new URLSearchParams({
+                        amount: total.toFixed(2),
+                        items: items.length,
+                        session_id: this.guestSessionId
                     });
 
-                    clearTimeout(timeoutId);
-                    const data = await res.json();
-                    if (data.success && data.redirect_url) {
-                        checkoutBtn.innerHTML = '<i class="fas fa-check me-2"></i>Redirecting to SSLCommerz...';
-                        window.location.href = data.redirect_url;
-                    } else {
-                        this.notify(data.message || 'Checkout failed', 'error');
-                        checkoutBtn.disabled = false;
-                        checkoutBtn.innerHTML = originalText;
-                    }
+                    checkoutBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Redirecting...';
+                    window.location.href = 'sslcommerz-demo.php?page=test-payment&' + params.toString();
+
                 } catch (err) {
-                    if (err.name === 'AbortError') {
-                        this.notify('Payment gateway is not responding. Please try again later.', 'error');
-                    } else {
-                        this.notify('Error processing checkout: ' + (err.message || 'Network error'), 'error');
-                    }
+                    this.notify('Error preparing payment: ' + (err.message || 'Unknown error'), 'error');
                     checkoutBtn.disabled = false;
                     checkoutBtn.innerHTML = originalText;
                 }

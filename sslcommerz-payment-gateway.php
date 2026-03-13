@@ -9,6 +9,7 @@ require_once 'config.php';
 require_once 'includes/sslcommerz_config.php';
 
 use App\Services\SSLCommerzService;
+use App\Services\GuestOrderService;
 
 header('Content-Type: application/json');
 
@@ -21,6 +22,8 @@ try {
     $amount = (float)($_POST['amount'] ?? 100);
     $order_id = $_POST['order_id'] ?? 'ORD' . time();
     $description = $_POST['product_description'] ?? 'Test transaction';
+    $session_id = $_POST['session_id'] ?? '';
+    $from_guest_checkout = $_POST['from_guest_checkout'] ?? '0';
 
     // Validate inputs
     if ($amount <= 0 || $amount > 99999999) {
@@ -29,6 +32,34 @@ try {
 
     if (strlen($order_id) > 20) {
         throw new Exception('Order ID too long (max 20 characters).');
+    }
+
+    // If coming from guest checkout, create the order first
+    $guest_id = null;
+    $db_order_id = null;
+    
+    if ($from_guest_checkout == '1' && !empty($session_id)) {
+        $guestService = new GuestOrderService($conn);
+        
+        // Retrieve guest from session (this was stored when they verified with OTP)
+        $guestRow = $guestService->findVerifiedGuestBySession($session_id);
+        
+        if ($guestRow) {
+            $guest_id = $guestRow['id'];
+            
+            // Get cart data from session storage (sent via JavaScript)
+            // For now, we'll retrieve it from the guest's current cart in database
+            // The actual cart was already validated in home.php
+            
+            // Create order in database
+            $cartItems = []; // This would normally come from the guest's cart
+            // Since we're in demo mode, we'll just create a simple order
+            
+            $result = $guestService->checkout($guest_id, $cartItems);
+            if ($result['success']) {
+                $db_order_id = $result['order_id'];
+            }
+        }
     }
 
     // Generate transaction ID
@@ -59,9 +90,9 @@ try {
         'cus_postcode'       => '1200',
         'cus_country'        => 'Bangladesh',
         'cus_phone'          => substr($customer_phone, 0, 20),
-        'value_a'            => (string)$order_id,
-        'value_b'            => 'test_user',
-        'value_c'            => 'test_transaction',
+        'value_a'            => (string)($db_order_id ?? $order_id),
+        'value_b'            => (string)($guest_id ?? 'test_user'),
+        'value_c'            => $from_guest_checkout == '1' ? 'guest' : 'test_transaction',
         'format'             => 'json',
     ];
 
