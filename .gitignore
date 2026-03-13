@@ -1,0 +1,52 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# XAMPP / Local Development
+xampp/
+htdocs/
+
+# Database Configuration
+includes/sslcommerz_config_local.php
+
+# System Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/settings.json
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node (if using any build tools)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Build/Dist
+dist/
+build/
+
+# Session files
+sessions/
+tmp/
+cache/
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride

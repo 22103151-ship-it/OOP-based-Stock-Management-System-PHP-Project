@@ -1,0 +1,63 @@
+<?php
+session_start();
+include '../config.php';
+use App\Core\Auth;
+use App\Services\SupplierOrderService;
+Auth::requireRole('admin', 'staff', 'supplier');
+include '../includes/header.php';
+
+$supplierOrderService = new SupplierOrderService($conn);
+
+$supplier_id = 0;
+if (file_exists('../includes/supplier_helpers.php')) {
+    include '../includes/supplier_helpers.php';
+    $supplier_id = getResolvedSupplierId($conn);
+}
+$orders = $supplierOrderService->getOrdersByStatus('pending', $supplier_id > 0 ? $supplier_id : null);
+?>
+
+<div style="max-width:900px; 
+               margin:20px auto; 
+               padding:20px; 
+               background:#f8f8f8; 
+               border-radius:8px;">
+    <a href="dashboard.php" style="display:inline-block; margin-bottom:20px; padding:8px 15px; background:#555; color:white; border-radius:5px; text-decoration:none;"> Back </a>
+    <h2>📦 Pending Orders</h2> <!-- ✅ Corrected heading -->
+
+    <table border="1" cellpadding="10" cellspacing="0" style="width:100%; border-collapse:collapse; background:white; text-align:left;">
+        <tr style="background:#ddd;">
+            <th>ID</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Status</th>
+            <th>Created At</th>
+        </tr>
+        <?php if (!empty($orders)): ?>
+            <?php foreach ($orders as $row): ?>
+            <tr>
+                <td><?php echo $row['id']; ?></td>
+                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                <td><?php echo $row['quantity']; ?></td>
+                <td><?php echo ucfirst($row['status']); ?></td>
+                <td><?php echo $row['created_at']; ?></td>
+            </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr><td colspan="5" style="text-align:center; color:#666;">No pending orders.</td></tr>
+        <?php endif; ?>
+    </table>
+</div>
+
+<!-- <footer style="
+    /* position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: pending;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+">
+    <p>© 2025 Stock Management System. All rights reserved.</p>
+</footer> */ -->
+
