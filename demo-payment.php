@@ -210,6 +210,9 @@ session_start();
         $amount = $_GET['amount'] ?? 0;
         $success_url = $_GET['success_url'] ?? '';
         $fail_url = $_GET['fail_url'] ?? '';
+        $value_a = $_GET['value_a'] ?? '';  // Order ID
+        $value_b = $_GET['value_b'] ?? '';  // Customer/Guest ID
+        $value_c = $_GET['value_c'] ?? '';  // Type (guest/customer)
 
         // Validate required params
         if (empty($tran_id) || empty($amount)) {
@@ -278,19 +281,29 @@ session_start();
             const amount = '<?php echo htmlspecialchars($amount); ?>';
             const successUrl = '<?php echo htmlspecialchars($success_url); ?>';
             const failUrl = '<?php echo htmlspecialchars($fail_url); ?>';
+            const valueA = '<?php echo htmlspecialchars($value_a); ?>';
+            const valueB = '<?php echo htmlspecialchars($value_b); ?>';
+            const valueC = '<?php echo htmlspecialchars($value_c); ?>';
 
             // Create a dummy val_id for demo
             const valId = 'DEMO' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
             if (status === 'success' && successUrl) {
-                // Redirect to success URL with dummy validation ID
+                // Redirect to success URL with dummy validation ID and order details
                 const url = successUrl + (successUrl.includes('?') ? '&' : '?') + 
                            'val_id=' + encodeURIComponent(valId) + 
-                           '&tran_id=' + encodeURIComponent(tranId);
+                           '&tran_id=' + encodeURIComponent(tranId) +
+                           '&value_a=' + encodeURIComponent(valueA) +
+                           '&value_b=' + encodeURIComponent(valueB) +
+                           '&value_c=' + encodeURIComponent(valueC);
                 window.location.href = url;
             } else if (status === 'fail' && failUrl) {
-                // Redirect to fail URL
-                window.location.href = failUrl;
+                // Redirect to fail URL with order details
+                const url = failUrl + (failUrl.includes('?') ? '&' : '?') +
+                           'value_a=' + encodeURIComponent(valueA) +
+                           '&value_b=' + encodeURIComponent(valueB) +
+                           '&value_c=' + encodeURIComponent(valueC);
+                window.location.href = url;
             } else {
                 alert('No redirect URL configured for ' + status + ' status');
             }

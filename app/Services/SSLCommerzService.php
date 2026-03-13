@@ -100,10 +100,13 @@ class SSLCommerzService
     private function _demoPayment(array $payload): array
     {
         $demoGatewayUrl = $this->baseUrl() . '/demo-payment.php?' . http_build_query([
-            'tran_id' => $payload['tran_id'] ?? 'DEMO' . time(),
-            'amount' => $payload['total_amount'] ?? 0,
+            'tran_id'    => $payload['tran_id'] ?? 'DEMO' . time(),
+            'amount'     => $payload['total_amount'] ?? 0,
             'success_url' => $payload['success_url'] ?? '',
-            'fail_url' => $payload['fail_url'] ?? '',
+            'fail_url'    => $payload['fail_url'] ?? '',
+            'value_a'     => $payload['value_a'] ?? '',  // Pass order ID
+            'value_b'     => $payload['value_b'] ?? '',  // Pass customer/guest ID
+            'value_c'     => $payload['value_c'] ?? '',  // Pass type (guest/customer/etc)
         ]);
 
         return [
