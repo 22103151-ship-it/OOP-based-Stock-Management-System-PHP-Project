@@ -64,8 +64,11 @@ class CustomerRegistrationService
         $pending->execute();
         $pending->close();
 
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $base = $protocol . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $https    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $script   = $_SERVER['SCRIPT_NAME'] ?? '';
+        $basePath = (strpos($script, '/stock/') !== false) ? '/stock' : rtrim(dirname($script), '/\\');
+        $base     = $https . '://' . $host . $basePath;
 
         $payload = [
             'store_id' => $this->storeId,

@@ -15,7 +15,7 @@ $SSLCOMMERZ_SANDBOX = true;
 
 // DEMO MODE: Set to true for local testing (no internet required)
 // For production: Set to false and use real credentials
-$SSLCOMMERZ_DEMO_MODE = true;
+$SSLCOMMERZ_DEMO_MODE = false;
 
 // Defaults (will be overridden by local config file or env vars if set)
 $SSLCOMMERZ_STORE_ID = 'ecomm696d82eaadc7b';

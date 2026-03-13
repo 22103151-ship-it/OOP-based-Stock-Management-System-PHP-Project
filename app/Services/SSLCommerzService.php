@@ -73,11 +73,6 @@ class SSLCommerzService
      */
     public function initPayment(array $payload): array
     {
-        // DEMO MODE: For local testing without internet connection
-        if ($this->demoMode) {
-            return $this->_demoPayment($payload);
-        }
-
         $payload['store_id']     = $this->storeId;
         $payload['store_passwd'] = $this->storePass;
         $payload['format']       = 'json';
@@ -90,30 +85,6 @@ class SSLCommerzService
         }
 
         return $result;
-    }
-
-    /**
-     * Demo payment mode - for local testing without internet connection
-     * Simulates a payment gateway redirect for testing purposes
-     * @return array{ok: bool, gateway_url: string, data: array}
-     */
-    private function _demoPayment(array $payload): array
-    {
-        $demoGatewayUrl = $this->baseUrl() . '/demo-payment.php?' . http_build_query([
-            'tran_id'    => $payload['tran_id'] ?? 'DEMO' . time(),
-            'amount'     => $payload['total_amount'] ?? 0,
-            'success_url' => $payload['success_url'] ?? '',
-            'fail_url'    => $payload['fail_url'] ?? '',
-            'value_a'     => $payload['value_a'] ?? '',  // Pass order ID
-            'value_b'     => $payload['value_b'] ?? '',  // Pass customer/guest ID
-            'value_c'     => $payload['value_c'] ?? '',  // Pass type (guest/customer/etc)
-        ]);
-
-        return [
-            'ok' => true,
-            'gateway_url' => $demoGatewayUrl,
-            'data' => ['demo_mode' => true, 'message' => 'Using demo payment gateway for testing'],
-        ];
     }
 
     // ------------------------------------------------------------------ validate
