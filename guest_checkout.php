@@ -56,7 +56,7 @@ $tranId      = 'GUEST' . $guestId . 'O' . $orderId . 'T' . time();
 $service->attachTranId($orderId, $tranId);
 
 // ---- Initiate SSLCommerz payment ----
-$ssl      = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX);
+$ssl      = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, (bool)($SSLCOMMERZ_DEMO_MODE ?? false));
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $base     = $protocol . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 

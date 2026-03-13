@@ -4,8 +4,8 @@ include 'config.php';
 
 use App\Services\GuestOrderService;
 
-// Check if this is a POST request from SSLCommerz
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+// Check if this is a POST request from SSLCommerz or GET from demo
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && empty($_GET['val_id'])) {
     // Direct access - check if there's an order in session or GET
     $order_id = (int)($_GET['order'] ?? 0);
     if ($order_id) {
@@ -44,9 +44,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$tranId  = $_POST['tran_id'] ?? '';
-$status  = $_POST['status'] ?? '';
-$orderId = (int)($_POST['value_a'] ?? 0);
+// Handle both POST and GET (GET for demo mode)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tranId  = $_POST['tran_id'] ?? '';
+    $status  = $_POST['status'] ?? '';
+    $orderId = (int)($_POST['value_a'] ?? 0);
+} else {
+    // Demo mode via GET
+    $tranId  = $_GET['tran_id'] ?? '';
+    $status  = 'VALID';  // Demo always treats as valid
+    $orderId = (int)($_GET['value_a'] ?? 0);
+}
 
 if (($status === 'VALID' || $status === 'VALIDATED') && $orderId && $tranId) {
     $service = new GuestOrderService($conn);

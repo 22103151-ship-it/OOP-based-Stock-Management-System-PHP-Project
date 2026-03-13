@@ -18,12 +18,14 @@ class SSLCommerzService
     private string $storeId;
     private string $storePass;
     private bool   $sandbox;
+    private bool   $demoMode;
 
-    public function __construct(string $storeId, string $storePass, bool $sandbox = true)
+    public function __construct(string $storeId, string $storePass, bool $sandbox = true, bool $demoMode = false)
     {
         $this->storeId   = $storeId;
         $this->storePass = $storePass;
         $this->sandbox   = $sandbox;
+        $this->demoMode  = $demoMode;
     }
 
     // ------------------------------------------------------------------ endpoints
@@ -71,6 +73,11 @@ class SSLCommerzService
      */
     public function initPayment(array $payload): array
     {
+        // DEMO MODE: For local testing without internet connection
+        if ($this->demoMode) {
+            return $this->_demoPayment($payload);
+        }
+
         $payload['store_id']     = $this->storeId;
         $payload['store_passwd'] = $this->storePass;
         $payload['format']       = 'json';
@@ -83,6 +90,27 @@ class SSLCommerzService
         }
 
         return $result;
+    }
+
+    /**
+     * Demo payment mode - for local testing without internet connection
+     * Simulates a payment gateway redirect for testing purposes
+     * @return array{ok: bool, gateway_url: string, data: array}
+     */
+    private function _demoPayment(array $payload): array
+    {
+        $demoGatewayUrl = $this->baseUrl() . '/demo-payment.php?' . http_build_query([
+            'tran_id' => $payload['tran_id'] ?? 'DEMO' . time(),
+            'amount' => $payload['total_amount'] ?? 0,
+            'success_url' => $payload['success_url'] ?? '',
+            'fail_url' => $payload['fail_url'] ?? '',
+        ]);
+
+        return [
+            'ok' => true,
+            'gateway_url' => $demoGatewayUrl,
+            'data' => ['demo_mode' => true, 'message' => 'Using demo payment gateway for testing'],
+        ];
     }
 
     // ------------------------------------------------------------------ validate
