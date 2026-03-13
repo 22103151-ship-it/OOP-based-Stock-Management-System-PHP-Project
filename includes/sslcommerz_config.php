@@ -18,8 +18,23 @@ $SSLCOMMERZ_SANDBOX = true;
 $SSLCOMMERZ_DEMO_MODE = false;
 
 // Defaults (will be overridden by local config file or env vars if set)
-$SSLCOMMERZ_STORE_ID = 'ecomm696d82eaadc7b';
-$SSLCOMMERZ_STORE_PASS = 'ecomm696d82eaadc7b@ssl';
+$SSLCOMMERZ_STORE_ID = 'ecomm696d82eeaadc7b';
+$SSLCOMMERZ_STORE_PASS = 'ecomm696d82eeaadc7b@ssl';
+
+// IMPORTANT: For localhost testing with SSL Commerz sandbox:
+// You MUST set a custom callback URL that matches your registered domain
+// Because SSL Commerz won't accept localhost as a callback URL
+// 
+// Option 1: Add this line to use your registered domain for callbacks:
+// $SSLCOMMERZ_CALLBACK_URL = 'http://www.nayeem.com'; 
+// Then add to your Windows hosts file: 127.0.0.1 www.nayeem.com
+//
+// Option 2: Use ngrok to tunnel localhost:
+// ngrok http 80 (get a forwarding URL like https://xxxx-xx-xxx-xx.ngrok.io)
+// $SSLCOMMERZ_CALLBACK_URL = 'https://xxxx-xx-xxx-xx.ngrok.io';
+//
+// Leave empty to auto-detect (production URL)
+$SSLCOMMERZ_CALLBACK_URL = '';
 
 // Optional local override (not committed)
 $localConfig = __DIR__ . '/sslcommerz_config_local.php';

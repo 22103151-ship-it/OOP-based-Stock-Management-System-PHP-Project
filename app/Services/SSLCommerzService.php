@@ -19,19 +19,27 @@ class SSLCommerzService
     private string $storePass;
     private bool   $sandbox;
     private bool   $demoMode;
+    private string $callbackUrl = '';
 
-    public function __construct(string $storeId, string $storePass, bool $sandbox = true, bool $demoMode = false)
+    public function __construct(string $storeId, string $storePass, bool $sandbox = true, bool $demoMode = false, string $callbackUrl = '')
     {
-        $this->storeId   = $storeId;
-        $this->storePass = $storePass;
-        $this->sandbox   = $sandbox;
-        $this->demoMode  = $demoMode;
+        $this->storeId    = $storeId;
+        $this->storePass  = $storePass;
+        $this->sandbox    = $sandbox;
+        $this->demoMode   = $demoMode;
+        $this->callbackUrl = $callbackUrl;
     }
 
     // ------------------------------------------------------------------ endpoints
 
     public function baseUrl(): string
     {
+        // If a custom callback URL is configured, use it (important for localhost testing)
+        if (!empty($this->callbackUrl)) {
+            return rtrim($this->callbackUrl, '/');
+        }
+
+        // Otherwise, auto-detect from current request
         $https  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         $scheme = $https ? 'https' : 'http';
         $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';

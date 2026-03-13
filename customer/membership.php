@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_membership'])) {
             'multi_card_name' => 'bkash',
         ];
         
-        $ssl = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX);
+        $ssl = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, false, $SSLCOMMERZ_CALLBACK_URL ?? '');
         $init = $ssl->initPayment($payload);
         
         if (!empty($init['ok']) && !empty($init['gateway_url'])) {

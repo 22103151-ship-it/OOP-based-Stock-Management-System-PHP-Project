@@ -83,7 +83,7 @@ if (Request::isPost() && Request::hasPost('place_order')) {
 
                 $paymentService->createInitiatedCustomerPayment($order_id, $customer_id, $tranId, $amount);
 
-                $ssl      = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, (bool)($SSLCOMMERZ_DEMO_MODE ?? false));
+                $ssl = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, (bool)($SSLCOMMERZ_DEMO_MODE ?? false), $SSLCOMMERZ_CALLBACK_URL ?? '');
                 $https    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                 $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
                 $script   = $_SERVER['SCRIPT_NAME'] ?? '';

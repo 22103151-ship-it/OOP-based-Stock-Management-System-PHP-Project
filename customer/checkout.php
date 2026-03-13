@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errors)) {
         $order_ids = $orderResult['order_ids'] ?? [];
         if ($payment_method === 'sslcommerz') {
             require_once '../includes/sslcommerz_config.php';
-            $ssl = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX);
+            $ssl = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, false, $SSLCOMMERZ_CALLBACK_URL ?? '');
             $tran_id = 'ORD' . time() . rand(1000,9999);
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $base = $protocol . '://' . $_SERVER['HTTP_HOST'];

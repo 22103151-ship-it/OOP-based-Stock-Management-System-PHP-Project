@@ -58,7 +58,13 @@ try {
     $service->attachTranId($orderId, $tranId);
 
     // ---- Initiate SSLCommerz payment ----
-    $ssl      = new SSLCommerzService($SSLCOMMERZ_STORE_ID, $SSLCOMMERZ_STORE_PASS, (bool)$SSLCOMMERZ_SANDBOX, (bool)($SSLCOMMERZ_DEMO_MODE ?? false));
+    $ssl = new SSLCommerzService(
+        $SSLCOMMERZ_STORE_ID, 
+        $SSLCOMMERZ_STORE_PASS, 
+        (bool)$SSLCOMMERZ_SANDBOX, 
+        (bool)($SSLCOMMERZ_DEMO_MODE ?? false),
+        $SSLCOMMERZ_CALLBACK_URL ?? ''  // Use configured callback URL if set
+    );
 
     // Get correct base URL with path (e.g., http://localhost/stock)
     $https    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
