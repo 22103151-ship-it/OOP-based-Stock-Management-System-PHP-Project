@@ -1,0 +1,100 @@
+name: PHP Syntax Check & Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mysqli, json, curl
+
+    - name: Check PHP Syntax
+      run: |
+        echo "🔍 Checking PHP syntax..."
+        
+        # Check root files
+        for file in *.php; do
+          php -l "$file" || exit 1
+        done
+        
+        # Check admin files
+        find admin/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        # Check customer files
+        find customer/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        # Check staff files
+        find staff/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        # Check supplier files
+        find supplier/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        # Check app files
+        find app/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        # Check includes files
+        find includes/ -name "*.php" -exec php -l {} \; || exit 1
+        
+        echo "✅ All PHP syntax checks passed!"
+
+    - name: Check File Integrity
+      run: |
+        echo "📋 Checking critical files..."
+        
+        test -f config.php || { echo "❌ config.php missing"; exit 1; }
+        test -f index.php || { echo "❌ index.php missing"; exit 1; }
+        test -f README.md || { echo "❌ README.md missing"; exit 1; }
+        test -d app/ || { echo "❌ app/ directory missing"; exit 1; }
+        
+        echo "✅ All required files present!"
+
+    - name: Validate Configuration
+      run: |
+        echo "⚙️  Validating configuration..."
+        
+        # Check if .env.example exists
+        test -f .env.example || { echo "❌ .env.example missing"; exit 1; }
+        
+        # Check if SQL files exist
+        test -f stock_management_system.sql || { echo "❌ SQL files missing"; exit 1; }
+        
+        echo "✅ Configuration validation passed!"
+
+  # Uncomment below for automatic deployment to VPS
+  # deploy:
+  #   name: Deploy to Production
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #
+  #   - name: Deploy to VPS
+  #     uses: appleboy/ssh-action@master
+  #     with:
+  #       host: ${{ secrets.VPS_HOST }}
+  #       username: ${{ secrets.VPS_USER }}
+  #       key: ${{ secrets.VPS_SSH_KEY }}
+  #       script: |
+  #         cd /var/www/html/stock
+  #         git pull origin main
+  #         echo "✅ Deployment successful!"
+  #
+  #   - name: Health Check
+  #     run: |
+  #       sleep 5
+  #       curl -f https://${{ secrets.VPS_HOST }}/api/health.php || exit 1
+  #       echo "✅ Application is healthy!"

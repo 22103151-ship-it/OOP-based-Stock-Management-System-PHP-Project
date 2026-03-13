@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PHP Application Container
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock_app
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./php.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      - DB_HOST=db
+      - DB_USER=stock_user
+      - DB_PASS=StockPassword123!
+      - DB_NAME=stock_management_system
+      - PHP_MEMORY_LIMIT=256M
+      - MAX_EXECUTION_TIME=300
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - stock_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MySQL Database Container
+  db:
+    image: mysql:8.0
+    container_name: stock_db
+    environment:
+      MYSQL_ROOT_PASSWORD: RootPassword123!
+      MYSQL_DATABASE: stock_management_system
+      MYSQL_USER: stock_user
+      MYSQL_PASSWORD: StockPassword123!
+      MYSQL_INITDB_SKIP_TZINFO: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./stock_management_system.sql:/docker-entrypoint-initdb.d/01_stock_management_system.sql
+      - ./customer_schema_updates.sql:/docker-entrypoint-initdb.d/02_customer_schema_updates.sql
+      - ./guest_membership_schema.sql:/docker-entrypoint-initdb.d/03_guest_membership_schema.sql
+      - ./notification_dots_schema.sql:/docker-entrypoint-initdb.d/04_notification_dots_schema.sql
+      - ./add_product_images.sql:/docker-entrypoint-initdb.d/05_add_product_images.sql
+    networks:
+      - stock_network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --max_connections=100 --default-storage-engine=InnoDB
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # phpMyAdmin for Database Management (Development Only)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: stock_phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: stock_user
+      PMA_PASSWORD: StockPassword123!
+      PMA_ROOT_PASSWORD: RootPassword123!
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - stock_network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  stock_network:
+    driver: bridge
